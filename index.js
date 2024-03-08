@@ -118,25 +118,27 @@ async function run() {
       }
     });
 
+    // saved jobs
+
     app.post("/jobs/saved", async (req, res) => {
       try {
-        const { jobId, userId } = req.body; // assuming each job has a unique jobId and userId represents the user doing the bookmarking
+        const { jobId, userEmail } = req.body; // assuming each job has a unique jobId and userId represents the user doing the bookmarking
 
         // Connect to the database and select the collection
 
         // Check if the job is already bookmarked by the user
         const isBookmarked = await savedJobsCollection.findOne({
           jobId,
-          userId,
+          userEmail,
         });
 
         let result;
         if (isBookmarked) {
           // If the job is bookmarked, remove the bookmark
-          result = await savedJobsCollection.deleteOne({ jobId, userId });
+          result = await savedJobsCollection.deleteOne({ jobId, userEmail });
         } else {
           // If the job is not bookmarked, add a bookmark
-          result = await savedJobsCollection.insertOne({ jobId, userId });
+          result = await savedJobsCollection.insertOne({ jobId, userEmail });
         }
 
         res.status(200).json(result);
@@ -145,8 +147,52 @@ async function run() {
         res.status(500).send("Error processing request");
       }
     });
+    app.get("/jobs/saved", async (req, res) => {
+      try {
+        const response = await savedJobsCollection.find().toArray();
+        res.status(200).json(response);
+      } catch (error) {
+        // Log the error for debugging purposes
+        console.error("Error occurred in /jobs/saved route:", error);
 
-    app.get("/jobs", async (req, res) => {
+        // Send a server error response
+        res
+          .status(500)
+          .json({ message: "An error occurred while retrieving saved jobs." });
+      }
+    });
+    app.get("/filteredJobs", async (req, res) => {
+      try {
+        const userEmail = req.query.email;
+        if (!userEmail) {
+          return res
+            .status(400)
+            .json({ message: "Email query parameter is required" });
+        }
+        console.log("email is", userEmail);
+        // Find all saved job entries for the given email
+        const savedJobs = await savedJobsCollection
+          .find({
+            userEmail: userEmail,
+          })
+          .toArray();
+        console.log(savedJobs);
+        // Extract job IDs from savedJobs
+        const jobIds = savedJobs.map((job) => new ObjectId(job.jobId));
+        console.log(jobIds);
+        // Find all jobs that match the job IDs
+        const jobs = await jobsCollection
+          .find({ _id: { $in: jobIds } })
+          .toArray();
+        console.log(jobs);
+        res.json(jobs);
+      } catch (error) {
+        console.error("Error fetching filtered jobs:", error);
+        res.status(500).json({ message: "Error fetching data" });
+      }
+    });
+
+    app.get("/allJobs", async (req, res) => {
       const result = await jobsCollection.find().toArray();
       res.send(result);
     });
