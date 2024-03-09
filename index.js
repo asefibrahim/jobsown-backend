@@ -48,75 +48,75 @@ async function run() {
       }
     });
 
-    // search jobs by name and location
-    app.get("/jobs", async (req, res) => {
-      const { query, location } = req.query;
-      console.log("Query:", query, "Location:", location);
-      try {
-        const jobs = await jobsCollection
-          .find({
-            JobTitle: { $regex: query, $options: "i" },
-            Location: { $regex: location, $options: "i" },
-          })
-          .toArray();
+    // // search jobs by name and location
+    // app.get("/jobs", async (req, res) => {
+    //   const { query, location } = req.query;
+    //   console.log("Query:", query, "Location:", location);
+    //   try {
+    //     const jobs = await jobsCollection
+    //       .find({
+    //         JobTitle: { $regex: query, $options: "i" },
+    //         Location: { $regex: location, $options: "i" },
+    //       })
+    //       .toArray();
 
-        res.json(jobs);
-      } catch (error) {
-        console.error("Error searching for jobs:", error);
-        res.status(500).json({ error: "Internal Server Error" });
-      }
-    });
+    //     res.json(jobs);
+    //   } catch (error) {
+    //     console.error("Error searching for jobs:", error);
+    //     res.status(500).json({ error: "Internal Server Error" });
+    //   }
+    // });
 
-    app.get("/jobs/salary", async (req, res) => {
-      const { salaryRange } = req.query; // "AED 60,000-AED 80,000"
+    // app.get("/jobs/salary", async (req, res) => {
+    //   const { salaryRange } = req.query; // "AED 60,000-AED 80,000"
 
-      try {
-        // Parse the salary range
-        // Construct a regex pattern to match the salary range
+    //   try {
+    //     // Parse the salary range
+    //     // Construct a regex pattern to match the salary range
 
-        const jobs = await jobsCollection
-          .find({
-            SalaryRange: { $regex: salaryRange, $options: "i" },
-          })
-          .toArray();
-        console.log(jobs);
-        res.json(jobs);
-      } catch (error) {
-        res.status(500).send(error.message);
-        console.log(error.message);
-      }
-    });
-    app.get("/jobs/workType", async (req, res) => {
-      const { workType } = req.query;
-      try {
-        const jobs = await jobsCollection
-          .find({
-            JobType: { $regex: workType, $options: "i" },
-          })
-          .toArray();
-        console.log(jobs);
-        res.json(jobs);
-      } catch (error) {
-        res.status(500).send(error.message);
-        console.log(error.message);
-      }
-    });
-    app.get("/jobs/genderType", async (req, res) => {
-      const { genderType } = req.query;
-      console.log(genderType);
-      try {
-        const jobs = await jobsCollection
-          .find({
-            Gender: { $regex: genderType, $options: "i" },
-          })
-          .toArray();
-        console.log(jobs);
-        res.json(jobs);
-      } catch (error) {
-        res.status(500).send(error.message);
-        console.log(error.message);
-      }
-    });
+    //     const jobs = await jobsCollection
+    //       .find({
+    //         SalaryRange: { $regex: salaryRange, $options: "i" },
+    //       })
+    //       .toArray();
+    //     console.log(jobs);
+    //     res.json(jobs);
+    //   } catch (error) {
+    //     res.status(500).send(error.message);
+    //     console.log(error.message);
+    //   }
+    // });
+    // app.get("/jobs/workType", async (req, res) => {
+    //   const { workType } = req.query;
+    //   try {
+    //     const jobs = await jobsCollection
+    //       .find({
+    //         JobType: { $regex: workType, $options: "i" },
+    //       })
+    //       .toArray();
+    //     console.log(jobs);
+    //     res.json(jobs);
+    //   } catch (error) {
+    //     res.status(500).send(error.message);
+    //     console.log(error.message);
+    //   }
+    // });
+    // app.get("/jobs/genderType", async (req, res) => {
+    //   const { genderType } = req.query;
+    //   console.log(genderType);
+    //   try {
+    //     const jobs = await jobsCollection
+    //       .find({
+    //         Gender: { $regex: genderType, $options: "i" },
+    //       })
+    //       .toArray();
+    //     console.log(jobs);
+    //     res.json(jobs);
+    //   } catch (error) {
+    //     res.status(500).send(error.message);
+    //     console.log(error.message);
+    //   }
+    // });
 
     // saved jobs
 
@@ -195,6 +195,68 @@ async function run() {
     app.get("/allJobs", async (req, res) => {
       const result = await jobsCollection.find().toArray();
       res.send(result);
+    });
+
+    // experiment
+
+    app.get("/jobs", async (req, res) => {
+      const {
+        query,
+        location,
+        salaryRange,
+        workType,
+        genderType,
+        page = 1,
+      } = req.query;
+      const limit = 5; // Fixed number of jobs per page
+      const skip = (page - 1) * limit; // Jobs to skip based on current page
+
+      try {
+        // Dynamic Filter Construction
+        let filter = {};
+        if (query) {
+          filter.JobTitle = { $regex: query, $options: "i" };
+        }
+        if (location) {
+          filter.Location = { $regex: location, $options: "i" };
+        }
+        if (salaryRange) {
+          filter.SalaryRange = { $regex: salaryRange, $options: "i" };
+        }
+        if (workType) {
+          filter.JobType = { $regex: workType, $options: "i" };
+        }
+        if (genderType) {
+          filter.Gender = { $regex: genderType, $options: "i" };
+        }
+
+        // Count total matching jobs before applying pagination
+        const totalJobs = await jobsCollection.countDocuments(filter);
+
+        // Fetch paginated jobs
+        let jobs = await jobsCollection
+          .find(filter)
+          .skip(skip)
+          .limit(limit)
+          .toArray();
+
+        // Check if no jobs are available after filtering
+        if (jobs.length === 0) {
+          return res
+            .status(200)
+            .json({ message: "No jobs available based on the given filters" });
+        }
+
+        res.json({
+          jobs: jobs,
+          totalJobs: totalJobs,
+          totalPages: Math.ceil(totalJobs / limit),
+          currentPage: parseInt(page),
+        });
+      } catch (error) {
+        console.error("Error searching for jobs:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+      }
     });
 
     // Send a ping to confirm a successful connection
