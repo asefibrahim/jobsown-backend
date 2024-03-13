@@ -26,7 +26,26 @@ async function run() {
     const jobsCollection = client.db("jobsownDb").collection("jobs");
     const savedJobsCollection = client.db("jobsownDb").collection("savedJobs");
     const usersCollection = client.db("jobsownDb").collection("users");
+    const blogsCollection = client.db("jobsownDb").collection("blogs");
+    const appliedJobsCollection = client
+      .db("jobsownDb")
+      .collection("appliedJobs");
 
+    // applied jobs related apis
+    app.post("/applied-jobs", async (req, res) => {
+      try {
+        const candidateData = req.body;
+        console.log(candidateData);
+
+        const data = await appliedJobsCollection.insertOne(candidateData);
+        res.json(data);
+      } catch (error) {
+        console.error(error);
+        res
+          .status(500)
+          .send("An error occurred while processing your request.");
+      }
+    });
     // user related apis
     app.post("/users", async (req, res) => {
       try {
@@ -48,75 +67,31 @@ async function run() {
       }
     });
 
-    // // search jobs by name and location
-    // app.get("/jobs", async (req, res) => {
-    //   const { query, location } = req.query;
-    //   console.log("Query:", query, "Location:", location);
-    //   try {
-    //     const jobs = await jobsCollection
-    //       .find({
-    //         JobTitle: { $regex: query, $options: "i" },
-    //         Location: { $regex: location, $options: "i" },
-    //       })
-    //       .toArray();
+    // blogs related apis
+    app.get("/blogs", async (req, res) => {
+      try {
+        const jobs = await blogsCollection.find({}).toArray();
 
-    //     res.json(jobs);
-    //   } catch (error) {
-    //     console.error("Error searching for jobs:", error);
-    //     res.status(500).json({ error: "Internal Server Error" });
-    //   }
-    // });
+        res.json(jobs);
+      } catch (error) {
+        res.status(500).send(error.message);
+      }
+    });
 
-    // app.get("/jobs/salary", async (req, res) => {
-    //   const { salaryRange } = req.query; // "AED 60,000-AED 80,000"
+    app.get("/blogs/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
 
-    //   try {
-    //     // Parse the salary range
-    //     // Construct a regex pattern to match the salary range
+        const job = await blogsCollection.findOne({ _id: new ObjectId(id) });
 
-    //     const jobs = await jobsCollection
-    //       .find({
-    //         SalaryRange: { $regex: salaryRange, $options: "i" },
-    //       })
-    //       .toArray();
-    //     console.log(jobs);
-    //     res.json(jobs);
-    //   } catch (error) {
-    //     res.status(500).send(error.message);
-    //     console.log(error.message);
-    //   }
-    // });
-    // app.get("/jobs/workType", async (req, res) => {
-    //   const { workType } = req.query;
-    //   try {
-    //     const jobs = await jobsCollection
-    //       .find({
-    //         JobType: { $regex: workType, $options: "i" },
-    //       })
-    //       .toArray();
-    //     console.log(jobs);
-    //     res.json(jobs);
-    //   } catch (error) {
-    //     res.status(500).send(error.message);
-    //     console.log(error.message);
-    //   }
-    // });
-    // app.get("/jobs/genderType", async (req, res) => {
-    //   const { genderType } = req.query;
-    //   console.log(genderType);
-    //   try {
-    //     const jobs = await jobsCollection
-    //       .find({
-    //         Gender: { $regex: genderType, $options: "i" },
-    //       })
-    //       .toArray();
-    //     console.log(jobs);
-    //     res.json(jobs);
-    //   } catch (error) {
-    //     res.status(500).send(error.message);
-    //     console.log(error.message);
-    //   }
-    // });
+        if (!job) {
+          return res.status(404).send("Job not found");
+        }
+        res.json(job);
+      } catch (error) {
+        res.status(500).send(error.message);
+      }
+    });
 
     // saved jobs
 
@@ -161,6 +136,49 @@ async function run() {
           .json({ message: "An error occurred while retrieving saved jobs." });
       }
     });
+
+    app.get("/filterAppliedJobs", async (req, res) => {
+      try {
+        const userEmail = req.query.email;
+        if (!userEmail) {
+          return res
+            .status(400)
+            .json({ message: "Email query parameter is required" });
+        }
+        console.log("email is", userEmail);
+
+        // Find all applied job entries for the given email
+        const appliedJobs = await appliedJobsCollection
+          .find({ email: userEmail })
+          .toArray();
+
+        // Extract job IDs from appliedJobs
+        const jobIds = appliedJobs.map((job) => new ObjectId(job.jobId));
+
+        // Find all jobs that match the job IDs
+        let jobs = await jobsCollection
+          .find({ _id: { $in: jobIds } })
+          .toArray();
+
+        // Merge the 'status' field from appliedJobs into the jobs
+        const jobsWithStatus = jobs.map((job) => {
+          // Find the corresponding applied job entry
+          const appliedJob = appliedJobs.find(
+            (applied) => applied.jobId.toString() === job._id.toString()
+          );
+
+          // If the applied job entry exists, add 'status' to the job object
+          return appliedJob ? { ...job, status: "applied" } : job;
+        });
+        console.log(jobsWithStatus);
+
+        res.json(jobsWithStatus);
+      } catch (error) {
+        console.error("Error fetching filtered jobs:", error);
+        res.status(500).json({ message: "Error fetching data" });
+      }
+    });
+
     app.get("/filteredJobs", async (req, res) => {
       try {
         const userEmail = req.query.email;
