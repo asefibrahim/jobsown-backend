@@ -13,8 +13,8 @@ router.post("/users", async (req, res) => {
     if (!savedUser || typeof savedUser !== "object") {
       return res.status(400).send("Invalid user data");
     }
-
-    const data = await getUsersCollection.insertOne(savedUser);
+    const usersCollection = getUsersCollection();
+    const data = await usersCollection.insertOne(savedUser);
     res.json(data);
   } catch (error) {
     console.error(error);

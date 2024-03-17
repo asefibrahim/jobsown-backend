@@ -113,15 +113,11 @@ router.get("/filteredJobs", async (req, res) => {
 
     const jobsCollection = getJobsCollection();
     // Find all saved job entries for the given email
-    const savedJobs = await savedJobsCollection
-      .find({
-        userEmail: userEmail,
-      })
-      .toArray();
-    console.log(savedJobs);
+    const filter = { userEmail: { $eq: userEmail } };
+    const savedJobs = await savedJobsCollection.find(filter).toArray();
     // Extract job IDs from savedJobs
     const jobIds = savedJobs.map((job) => new ObjectId(job.jobId));
-    console.log(jobIds);
+
     // Find all jobs that match the job IDs
     const jobs = await jobsCollection.find({ _id: { $in: jobIds } }).toArray();
     console.log(jobs);

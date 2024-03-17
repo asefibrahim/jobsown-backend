@@ -1,5 +1,6 @@
 const express = require("express");
 const { getBlogsCollection } = require("../db/collections");
+const { ObjectId } = require("mongodb");
 const router = express.Router();
 
 // Define all your blog-related routes here
@@ -16,8 +17,8 @@ router.get("/blogs", async (req, res) => {
 router.get("/blogs/:id", async (req, res) => {
   try {
     const id = req.params.id;
-
-    const job = await getBlogsCollection.findOne({ _id: new ObjectId(id) });
+    const blogsCollection = getBlogsCollection();
+    const job = await blogsCollection.findOne({ _id: new ObjectId(id) });
 
     if (!job) {
       return res.status(404).send("Job not found");
