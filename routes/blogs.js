@@ -2,8 +2,8 @@ const express = require("express");
 const { getBlogsCollection } = require("../db/collections");
 const { ObjectId } = require("mongodb");
 const router = express.Router();
-
-// Define all your blog-related routes here
+const bc = 0;
+// Define all your blog-related
 
 router.get("/blogs", async (req, res) => {
   try {
@@ -28,6 +28,5 @@ router.get("/blogs/:id", async (req, res) => {
     res.status(500).send(error.message);
   }
 });
-// ... more routes
 
 module.exports = router;

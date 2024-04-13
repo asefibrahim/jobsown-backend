@@ -7,7 +7,78 @@ const {
 const { ObjectId } = require("mongodb");
 const router = express.Router();
 
-// Define all your job-related routes here
+// Define alll your job-related routes here
+// Define alll your job-related routes here
+router.post("/jobs", async (req, res) => {
+  try {
+    const jobsData = req.body;
+
+    // Ensure that jobsData is not empty
+    if (!jobsData || Object.keys(jobsData).length === 0) {
+      return res.status(400).json({ message: "Job data is required" });
+    }
+
+    const jobsCollection = getJobsCollection();
+
+    // Insert the job data into the database
+    const result = await jobsCollection.insertOne(jobsData);
+
+    // Check if the insertion was successful
+    if (result.acknowledged) {
+      res.status(201).json({
+        message: "Job created successfully",
+        jobId: result.insertedId,
+      });
+    } else {
+      throw new Error("Failed to create the job");
+    }
+  } catch (error) {
+    // Handle any errors that occur during the process
+    console.error("Error creating job: ", error.message);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+router.get("/savedJobsFromEmployee", async (req, res) => {
+  const { email } = req.query; // Assuming the query parameter name is 'email'
+
+  try {
+    if (!email) {
+      return res.status(400).json({ message: "Employee email is required" });
+    }
+
+    const jobsCollection = getJobsCollection();
+    const jobs = await jobsCollection.find({ employeeEmail: email }).toArray();
+
+    if (jobs.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No jobs found for the given employee email" });
+    }
+
+    res.status(200).json(jobs);
+  } catch (error) {
+    console.error("Error fetching jobs: ", error.message);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+router.delete("/savedJobsFromEmployee/:id", async (req, res) => {
+  const { id } = req.params;
+  console.log(id);
+
+  try {
+    const jobsCollection = getJobsCollection();
+    const result = await jobsCollection.deleteOne({ _id: new ObjectId(id) });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ message: "Job not found" });
+    }
+
+    res.status(200).json({ message: "Job deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting job: ", error.message);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
 
 router.get("/jobs", async (req, res) => {
   const {
