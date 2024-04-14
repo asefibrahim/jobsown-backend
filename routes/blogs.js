@@ -7,8 +7,8 @@ const bc = 0;
 
 router.get("/blogs", async (req, res) => {
   try {
-    const jobs = await getBlogsCollection.find({}).toArray();
-
+    const jobs = await getBlogsCollection.find().toArray();
+    console.log(jobs);
     res.json(jobs);
   } catch (error) {
     res.status(500).send(error.message);

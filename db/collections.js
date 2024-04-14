@@ -10,4 +10,5 @@ module.exports = {
   getUsersCollection: () => getCollection("users"),
   getBlogsCollection: () => getCollection("blogs"),
   getAppliedJobsCollection: () => getCollection("appliedJobs"),
+  getCandidatesCollection: () => getCollection("candidates"),
 };

@@ -3,6 +3,7 @@ const cors = require("cors");
 const jobsRouter = require("./routes/jobs");
 const usersRouter = require("./routes/users");
 const blogsRouter = require("./routes/blogs");
+const candidatesRouter = require("./routes/candidates");
 const errorHandler = require("./middleware/errorHandler");
 const { connectToDb } = require("./db/db");
 require("dotenv").config();
@@ -20,6 +21,7 @@ connectToDb();
 app.use("/api", jobsRouter);
 app.use("/api", usersRouter);
 app.use("/api", blogsRouter);
+app.use("/api", candidatesRouter);
 
 // Root endpoint
 app.get("/", (req, res) => {
