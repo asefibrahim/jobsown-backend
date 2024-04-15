@@ -6,8 +6,7 @@ const router = express.Router();
 // Example route:
 router.get("/candidates", async (req, res) => {
   try {
-    const { keyword, currentCity, minExperience, maxExperience, minSalary, maxSalary, education, cvLink, searchIndustries } = req?.query;
-    console.log(keyword, currentCity, minExperience, maxExperience, minSalary, maxSalary, education, cvLink, searchIndustries);
+    const { keyword, currentCity, minExperience, maxExperience, minSalary, maxSalary, education, cvLink, searchIndustries, gender, minAge, maxAge, language } = req?.query;
 
     const candidatesCollection = getCandidatesCollection();
     let filter = {};
@@ -21,8 +20,6 @@ router.get("/candidates", async (req, res) => {
     
     const minExperienceNum = parseInt(minExperience);
     const maxExperienceNum = parseInt(maxExperience);
-
-    console.log("the min and max vaule are", minExperienceNum, maxExperienceNum);
 
     if (minExperienceNum && maxExperienceNum) {
       filter['experience_years'] = { $gte: minExperienceNum, $lte: maxExperienceNum };
@@ -51,15 +48,34 @@ router.get("/candidates", async (req, res) => {
     // sorting by cv
     if(cvLink) {
       filter['cv_link'] = { $exists: true, $ne: '' }; 
-      console.log("cv link entered");
     }
 
     // sorting by industries
     if(searchIndustries){
       filter['experience.Department'] = { $regex: searchIndustries, $options: "i" };
     }
+
+    // sorting by gender
+    if(gender){
+      filter['gender'] = { $regex: gender, $options: "i" };
+    }
    
-    console.log('line number',filter);
+    // sorting by age
+    const minAgeNum = parseInt(minAge);
+    const maxAgeNum = parseInt(maxAge);
+
+    if (minAgeNum && maxAgeNum) {
+      filter['age'] = { $gte: minAgeNum, $lte: maxAgeNum };
+    } else if (minAgeNum) {
+      filter['age'] = { $gte: minAgeNum };
+    } else if (maxAgeNum) {
+      filter['age'] = { $lte: maxAgeNum };
+    }
+
+    // sort by age num
+    if(language){
+      filter['languages'] = { $in: [new RegExp(language, 'i')] };
+    }
 
     const data = await candidatesCollection.find(filter).toArray();
     // console.log(data);
