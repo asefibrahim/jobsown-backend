@@ -57,8 +57,9 @@ router.get("/candidates", async (req, res) => {
 
     // sorting by gender
     if(gender){
-      filter['gender'] = { $regex: gender, $options: "i" };
+      filter['gender'] = gender;
     }
+
    
     // sorting by age
     const minAgeNum = parseInt(minAge);
