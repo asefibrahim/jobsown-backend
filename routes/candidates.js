@@ -1,5 +1,6 @@
 const express = require("express");
 const { getCandidatesCollection } = require("../db/collections");
+const { ObjectId } = require("mongodb");
 const router = express.Router();
 
 // Define all your candidates-related routes here
@@ -86,6 +87,56 @@ router.get("/candidates", async (req, res) => {
     res.status(500).send("An error occurred while processing your request.");
   }
 });
+
+// post or update a candidates information
+router.post("/addcandidate", async(req, res) => {
+  // receive new candidate info
+  try {
+    const newCandidate = req.body;
+  const candidatesCollection = getCandidatesCollection();
+  const isExist = await candidatesCollection.findOne({email: newCandidate.email});
+  // if candidate exist
+  if(isExist === null){
+    const result = await candidatesCollection.insertOne(newCandidate);
+    res.send(result);
+    return
+  }
+  const filter = {email: newCandidate.email};
+  const options = { upsert: true };
+  const updateDoc = {
+    $set: newCandidate
+  };
+  const result = await candidatesCollection.updateOne(filter, updateDoc, options);
+  res.send(result);
+  } catch (error) {
+    res.status(500).send(error)
+  }
+
+})
+
+// get a specific candiates info
+router.get("/candidate-info/:email", async(req, res) => {
+  try {
+    const userEmail = req.params?.email;
+    const candidatesCollection = getCandidatesCollection();
+    const result = await candidatesCollection.findOne({email: userEmail});
+    res.send(result);
+  } catch (error) {
+    res.status(500).send(error)
+  }
+})
+
+// get candidate information by id
+router.get("/candidate-details/:id", async(req, res) => {
+  try {
+    const id = req.params?.id;
+    const candidatesCollection = getCandidatesCollection();
+    const result = await candidatesCollection.findOne({_id: new ObjectId(id)});
+    res.send(result);
+  } catch (error) {
+    res.status(500).send(error)
+  }
+})
 
 // ... more routes
 
