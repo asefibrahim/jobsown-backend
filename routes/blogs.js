@@ -7,7 +7,7 @@ const bc = 0;
 
 router.get("/blogs", async (req, res) => {
   try {
-    const jobs = await getBlogsCollection.find().toArray();
+    const jobs = await getBlogsCollection().find().toArray();
     console.log(jobs);
     res.json(jobs);
   } catch (error) {
@@ -15,18 +15,16 @@ router.get("/blogs", async (req, res) => {
   }
 });
 router.get("/blogs/:id", async (req, res) => {
-  try {
-    const id = req.params.id;
-    const blogsCollection = getBlogsCollection();
-    const job = await blogsCollection.findOne({ _id: new ObjectId(id) });
 
-    if (!job) {
-      return res.status(404).send("Job not found");
-    }
-    res.json(job);
+  try {
+    const id = req.params?.id;
+    const blogsCollection = getBlogsCollection();
+    const job = await blogsCollection.findOne({_id: new ObjectId(id)});
+    res.send(job);
   } catch (error) {
     res.status(500).send(error.message);
   }
+
 });
 
 module.exports = router;

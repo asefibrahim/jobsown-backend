@@ -11,7 +11,7 @@ require("dotenv").config();
 const app = express();
 const port = process.env.PORT || 5000;
 
-app.use(cors("https://jobsown-server.vercel.app"));
+app.use(cors(["http://localhost:5173", "https://jobsown-lyart.vercel.app/"]));
 app.use(express.json());
 
 // Connect to MongoDB
