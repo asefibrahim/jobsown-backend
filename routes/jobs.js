@@ -41,6 +41,8 @@ router.post("/jobs", async (req, res) => {
 router.get("/savedJobsFromEmployee", async (req, res) => {
   const { email } = req.query; // Assuming the query parameter name is 'email'
 
+  console.log("is server gott email", email);
+
   try {
     if (!email) {
       return res.status(400).json({ message: "Employee email is required" });
@@ -48,13 +50,6 @@ router.get("/savedJobsFromEmployee", async (req, res) => {
 
     const jobsCollection = getJobsCollection();
     const jobs = await jobsCollection.find({ employeeEmail: email }).toArray();
-
-    if (jobs.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "No jobs found for the given employee email" });
-    }
-
     res.status(200).json(jobs);
   } catch (error) {
     console.error("Error fetching jobs: ", error.message);

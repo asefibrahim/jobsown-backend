@@ -12,11 +12,11 @@ router.get("/candidates", async (req, res) => {
     const candidatesCollection = getCandidatesCollection();
     let filter = {};
     if (keyword) {
-      filter['experience.job_title'] = { $regex: keyword, $options: "i" };
+      filter['preferred_job_title'] = { $regex: keyword, $options: "i" };
       // filter.skills = { $in: [new RegExp(keyword, 'i')] };
     }
     if(currentCity){
-      filter['experience.job_city'] = { $regex: currentCity, $options: "i" };
+      filter['location'] = { $regex: currentCity, $options: "i" };
     }
     
     const minExperienceNum = parseInt(minExperience);
@@ -53,7 +53,11 @@ router.get("/candidates", async (req, res) => {
 
     // sorting by industries
     if(searchIndustries){
-      filter['experience.Department'] = { $regex: searchIndustries, $options: "i" };
+      filter['experience'] = {
+        $elemMatch: {
+          'department': { $regex: searchIndustries, $options: "i" }
+        }
+      };
     }
 
     // sorting by gender
