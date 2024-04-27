@@ -1,5 +1,5 @@
 const express = require("express");
-const { getCandidatesCollection, getAppliedJobsCollection } = require("../db/collections");
+const { getCandidatesCollection, getAppliedJobsCollection, getSavedCandidatesCollection } = require("../db/collections");
 const { ObjectId } = require("mongodb");
 const router = express.Router();
 
@@ -148,7 +148,42 @@ router.get("/applied-candidates/:id", async(req, res) => {
     const id = req.params?.id;
     const appliedJobsCollecation = getAppliedJobsCollection();
     const result = await appliedJobsCollecation.find({jobId: id}).toArray();
-    console.log('applied candidates are',result);
+    res.send(result);
+  } catch (error) {
+    res.status(500).send(error)
+  }
+})
+
+// saved and unsaved candidates collection
+router.post("/save-candidate", async(req, res) => {
+  // receive new candidate info
+  try {
+    const candidate = req?.body;
+    console.log(candidate);
+  const savecandidatesCollection = getSavedCandidatesCollection();
+  const isExist = await savecandidatesCollection.findOne({savedEmail: candidate?.savedEmail, candidateId: candidate?.candidateId});
+  console.log("is Exist", isExist);
+  // if candidate exist
+  if(isExist === null){
+    const result = await savecandidatesCollection.insertOne(candidate);
+    res.send(result);
+    return
+  }
+  const result = await savecandidatesCollection.deleteOne({savedEmail: candidate?.savedEmail, candidateId: candidate?.candidateId});
+  res.send(result);
+  } catch (error) {
+    res.status(500).send(error)
+  }
+
+})
+
+// get my saved candidates ids
+router.get("/mysaved-candidates/:email", async(req, res) => {
+  try {
+    const email = req.params?.email;
+    const savecandidatesCollection = getSavedCandidatesCollection();
+    const result = await savecandidatesCollection.find({savedEmail: email}).toArray();
+    console.log('my saved applied candidates are', result);
     res.send(result);
   } catch (error) {
     res.status(500).send(error)
