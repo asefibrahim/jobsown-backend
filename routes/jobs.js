@@ -114,6 +114,7 @@ router.get("/jobs", async (req, res) => {
       .find(filter)
       .skip(skip)
       .limit(limit)
+      .sort({_id: -1})
       .toArray();
 
     // Check if no jobs are available after filtering

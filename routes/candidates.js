@@ -1,5 +1,5 @@
 const express = require("express");
-const { getCandidatesCollection } = require("../db/collections");
+const { getCandidatesCollection, getAppliedJobsCollection } = require("../db/collections");
 const { ObjectId } = require("mongodb");
 const router = express.Router();
 
@@ -136,6 +136,19 @@ router.get("/candidate-details/:id", async(req, res) => {
     const id = req.params?.id;
     const candidatesCollection = getCandidatesCollection();
     const result = await candidatesCollection.findOne({_id: new ObjectId(id)});
+    res.send(result);
+  } catch (error) {
+    res.status(500).send(error)
+  }
+})
+
+// get applied candidates
+router.get("/applied-candidates/:id", async(req, res) => {
+  try {
+    const id = req.params?.id;
+    const appliedJobsCollecation = getAppliedJobsCollection();
+    const result = await appliedJobsCollecation.find({jobId: id}).toArray();
+    console.log('applied candidates are',result);
     res.send(result);
   } catch (error) {
     res.status(500).send(error)

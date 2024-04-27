@@ -22,6 +22,18 @@ router.post("/users", async (req, res) => {
   }
 });
 
+// get user info by email
+router.get("/user-data/:email", async(req, res) => {
+  try {
+    const email = req.params?.email;
+    const usersCollection = getUsersCollection();
+    const result = await usersCollection.findOne({email: email});
+    res.send(result);
+  } catch (error) {
+    res.status(500).send(error)
+  }
+})
+
 // ... more routes
 
 module.exports = router;
