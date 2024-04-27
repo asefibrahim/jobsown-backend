@@ -162,7 +162,7 @@ router.post("/save-candidate", async(req, res) => {
     console.log(candidate);
   const savecandidatesCollection = getSavedCandidatesCollection();
   const isExist = await savecandidatesCollection.findOne({savedEmail: candidate?.savedEmail, candidateId: candidate?.candidateId});
-  console.log("is Exist", isExist);
+  // console.log("is Exist", isExist);
   // if candidate exist
   if(isExist === null){
     const result = await savecandidatesCollection.insertOne(candidate);
@@ -183,12 +183,26 @@ router.get("/mysaved-candidates/:email", async(req, res) => {
     const email = req.params?.email;
     const savecandidatesCollection = getSavedCandidatesCollection();
     const result = await savecandidatesCollection.find({savedEmail: email}).toArray();
-    console.log('my saved applied candidates are', result);
+    // console.log('my saved applied candidates are', result);
     res.send(result);
   } catch (error) {
     res.status(500).send(error)
   }
 })
+
+// get all saved candidates data of an employee
+router.get("/my-savedcandidatesare/:email", async (req, res) => {
+  try {
+    const email = req.params?.email;
+    const savecandidatesCollection = getSavedCandidatesCollection();
+    const candidates = await savecandidatesCollection.find({ savedEmail: email }).toArray();
+    res.json(candidates);
+    // Now you can use the candidate object as needed
+  } catch (error) {
+    res.status(500).send(error);
+  }
+});
+
 
 // ... more routes
 
