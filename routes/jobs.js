@@ -78,6 +78,7 @@ router.delete("/savedJobsFromEmployee/:id", async (req, res) => {
 router.get("/jobs", async (req, res) => {
   const {
     query,
+
     location,
     salaryRange,
     workType,
@@ -114,7 +115,7 @@ router.get("/jobs", async (req, res) => {
       .find(filter)
       .skip(skip)
       .limit(limit)
-      .sort({_id: -1})
+      .sort({ _id: -1 })
       .toArray();
 
     // Check if no jobs are available after filtering
@@ -162,6 +163,33 @@ router.post("/jobs/saved", async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).send("Error processing request");
+  }
+});
+
+// get job description by id
+router.get("/jobDescription/:jobId", async (req, res) => {
+  try {
+    const jobId = req.params.jobId;
+    if (!ObjectId.isValid(jobId)) {
+      return res.status(400).json({ message: "Invalid job ID format" });
+    }
+
+    const jobsCollection = getJobsCollection();
+
+    // Find the job entry with the given job ID
+    const job = await jobsCollection.findOne({ _id: new ObjectId(jobId) });
+
+    if (!job) {
+      return res.status(404).json({ message: "Job not found" });
+    }
+
+    console.log("Job description for ID", jobId, "is:", job.description);
+
+    // Respond with the job description
+    res.json({ description: job.description });
+  } catch (error) {
+    console.error("Error fetching job description:", error);
+    res.status(500).json({ message: "Error fetching data" });
   }
 });
 
